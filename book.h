@@ -4,6 +4,9 @@
 #ifndef BOOK_H
 #define BOOK_H
 
+#define INITIAL_CAPACITY 10
+#define MAX_BOOK_LEN 256
+
 void book_init();
 void book_add();
 void book_edit();

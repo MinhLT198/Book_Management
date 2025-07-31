@@ -7,8 +7,6 @@
 #include <stdbool.h>
 #include "book.h"
 
-#define INITIAL_CAPACITY 10
-
 typedef struct {
     int id;
     char *title;
@@ -17,7 +15,7 @@ typedef struct {
 } Book;
 
 static Book *pbook = NULL;
-static Book *pbook_del = NULL;
+static int *pbook_del = NULL;
 static int book_count = 0;
 static int book_count_del = 0;
 static int book_capacity = 0;
@@ -26,7 +24,7 @@ static int book_capacity_del = 0;
 void book_init() {
     book_capacity_del = book_capacity = INITIAL_CAPACITY;
     pbook = (Book *)malloc(book_capacity * sizeof(Book));
-    pbook_del = (Book *)malloc(book_capacity_del * sizeof(Book));
+    pbook_del = (int *)malloc(book_capacity_del * sizeof(int));
 }
 
 static void resize_books() {
@@ -36,17 +34,21 @@ static void resize_books() {
 
 static void resize_books_del() {
     book_capacity_del *= 2;
-    pbook_del = (Book *)realloc(pbook_del, book_capacity_del * sizeof(Book));
+    pbook_del = (int *)realloc(pbook_del, book_capacity_del * sizeof(int));
 }
 
 void book_add() {
     if (book_count == book_capacity) resize_books();
 
     Book *b = &pbook[book_count];
-    b->id = book_count + 1;
+    if (book_count_del != 0)
+        b->id = pbook_del[--book_count_del];
+    else
+        b->id = book_count + 1;
+
     b->is_borrowed = false;
 
-    char buffer[256];
+    char buffer[MAX_BOOK_LEN];
     printf("Enter book title: ");
     fgets(buffer, sizeof(buffer), stdin);
     buffer[strcspn(buffer, "\n")] = 0;
@@ -73,7 +75,7 @@ void book_edit() {
         return;
     }
 
-    char buffer[256];
+    char buffer[MAX_BOOK_LEN];
     printf("Enter new title: ");
     fgets(buffer, sizeof(buffer), stdin);
     buffer[strcspn(buffer, "\n")] = 0;
@@ -102,16 +104,15 @@ void book_delete() {
     }
 
     if (book_count_del == book_capacity_del) resize_books_del();
-    Book *del = &pbook_del[book_count_del];
-    //free(pbook[idx].title);
-    //free(pbook[idx].author);
-    printf("book_count %d\n",book_count);
+    pbook_del[book_count_del++] = id;
+    free(pbook[idx].title);
+    free(pbook[idx].author);
     pbook[idx] = pbook[--book_count];
     printf("Book deleted.\n");
 }
 
 void book_search() {
-    char keyword[256];
+    char keyword[MAX_BOOK_LEN];
     printf("Enter keyword to search (title or author): ");
     fgets(keyword, sizeof(keyword), stdin);
     keyword[strcspn(keyword, "\n")] = 0;
@@ -126,6 +127,10 @@ void book_search() {
 }
 
 void book_list() {
+    if (book_count == 0) {
+        printf("No books available.\n");
+        return;
+    }
     for (int i = 0; i < book_count; ++i) {
         printf("ID: %d, Title: %s, Author: %s, %s\n",
                pbook[i].id, pbook[i].title, pbook[i].author,
