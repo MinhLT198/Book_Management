@@ -7,16 +7,9 @@
 #include <stdbool.h>
 #include "book.h"
 
-typedef struct {
-    int id;
-    char *title;
-    char *author;
-    bool is_borrowed;
-} Book;
-
-static Book *pbook = NULL;
+Book *pbook = NULL;
 static int *pbook_del = NULL;
-static int book_count = 0;
+int book_count = 0;
 static int book_count_del = 0;
 static int book_capacity = 0;
 static int book_capacity_del = 0;
@@ -40,11 +33,11 @@ static void resize_books_del() {
 void book_add() {
     if (book_count == book_capacity) resize_books();
 
-    Book *b = &pbook[book_count];
+    Book *b = &pbook[book_count++];
     if (book_count_del != 0)
         b->id = pbook_del[--book_count_del];
     else
-        b->id = book_count + 1;
+        b->id = book_count;
 
     b->is_borrowed = false;
 
@@ -59,7 +52,6 @@ void book_add() {
     buffer[strcspn(buffer, "\n")] = 0;
     b->author = strdup(buffer);
 
-    book_count++;
     printf("Book added successfully.\n");
 }
 
@@ -117,12 +109,19 @@ void book_search() {
     fgets(keyword, sizeof(keyword), stdin);
     keyword[strcspn(keyword, "\n")] = 0;
 
+    bool found = false;
     for (int i = 0; i < book_count; ++i) {
         if (strstr(pbook[i].title, keyword) || strstr(pbook[i].author, keyword)) {
+            found = true;
             printf("ID: %d, Title: %s, Author: %s, %s\n",
                    pbook[i].id, pbook[i].title, pbook[i].author,
                    pbook[i].is_borrowed ? "Borrowed" : "Available");
+            break;
         }
+    }
+
+    if (!found) {
+        printf("No books found matching the keyword.\n");
     }
 }
 
@@ -140,9 +139,12 @@ void book_list() {
 
 void book_free() {
     for (int i = 0; i < book_count; ++i) {
+        pbook[i].id = 0;
         free(pbook[i].title);
         free(pbook[i].author);
+        pbook[i].is_borrowed = false;
     }
+    book_count = 0;
     free(pbook);
 }
 

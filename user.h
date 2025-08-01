@@ -4,9 +4,16 @@
 #ifndef USER_H
 #define USER_H
 
-#define MAX_BORROWED_BOOKS 10
 #define INITIAL_CAPACITY 10
 #define MAX_NAME_LEN 100
+
+typedef struct 
+{
+    int id;
+    char *name;
+    int *borrowed_books; // Store book IDs
+    int borrowed_count;
+}User;
 
 void user_init();
 void user_add();

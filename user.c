@@ -6,21 +6,12 @@
 #include <string.h>
 #include "user.h"
 
-typedef struct 
-{
-    int id;
-    char *name;
-    int borrowed_books[MAX_BORROWED_BOOKS]; // Store book IDs
-    int borrowed_count;
-}User;
-
-static User *user = NULL;
-static int user_count = 0;
+User *user = NULL;
+int user_count = 0;
 static int user_capacity = 0;
 static int *user_del = NULL;
 static int user_count_del = 0;
 static int user_capacity_del = 0;
-
 
 void user_init(){
     user_capacity_del = user_capacity = INITIAL_CAPACITY;
@@ -36,13 +27,21 @@ static void resize_users() {
     user_capacity *= 2;
     user = (User *)realloc(user, user_capacity * sizeof(User));
 }
+static void resize_users_del() {
+    user_capacity_del *= 2;
+    user_del = (int *)realloc(user_del, user_capacity_del * sizeof(int));
+}
 
 void user_add() {
     if (user_count == user_capacity) resize_users();
 
     User *u = &user[user_count++];
-    u->id = user_count; // Simple ID assignment
+    if (user_count_del != 0)
+        u->id = user_del[--user_count_del];
+    else
+        u->id = user_count; // Simple ID assignment
     u->borrowed_count = 0;
+    u->borrowed_books = NULL;
     char buffer[MAX_NAME_LEN];
     printf("Enter user name: ");
     fgets(buffer, sizeof(buffer), stdin);
@@ -84,6 +83,8 @@ void user_delete() {
         return;
     }
 
+    if (user_count_del == user_capacity_del) resize_users_del();
+    user_del[user_count_del++] = id;
     free(user[idx].name);
     user[idx] = user[--user_count]; // Replace with last user
     printf("User deleted.\n");
@@ -99,12 +100,13 @@ void user_list() {
 }
 void user_free(){
     for (int i = 0; i < user_count; ++i) {
+        user[i].id = 0;
         free(user[i].name);
+        free(user[i].borrowed_books);
+        user[i].borrowed_count = 0;
     }
-    free(user);
-    user = NULL;
     user_count = 0;
-    user_capacity = INITIAL_CAPACITY;
+    free(user);
 }
 int user_find_index(int id){
     for (int i = 0; i < user_count; ++i) {

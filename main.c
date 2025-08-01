@@ -27,8 +27,8 @@ int main() {
             case 4: user_add(); break;
             case 5: user_edit(); break;
             case 6: user_delete(); break;
-            //case 7: borrow_book(); break;
-            //case 8: return_book(); break;
+            case 7: book_borrow(); break;
+            case 8: book_return(); break;
             case 9: book_search(); break;
             case 10: book_list(); break;
             case 11: user_list(); break;
